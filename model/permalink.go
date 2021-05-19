@@ -3,7 +3,7 @@ package model
 import "encoding/json"
 
 type Permalink struct {
-	PostMessage string `json:"post_message"`
+	LinkedPost *Post `json:"linked_post"`
 }
 
 func (o *Permalink) ToJson() string {

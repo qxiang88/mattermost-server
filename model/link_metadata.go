@@ -119,13 +119,7 @@ func (o *LinkMetadata) IsValid() *AppError {
 			return NewAppError("LinkMetadata.IsValid", "model.link_metadata.is_valid.data_type.app_error", nil, "", http.StatusBadRequest)
 		}
 	case LINK_METADATA_TYPE_PERMALINK:
-		if o.Data == nil {
-			return NewAppError("LinkMetadata.IsValid", "model.link_metadata.is_valid.data.app_error", nil, "", http.StatusBadRequest)
-		}
-
-		if _, ok := o.Data.(*Permalink); !ok {
-			return NewAppError("LinkMetadata.IsValid", "model.link_metadata.is_valid.data_type.app_error", nil, "", http.StatusBadRequest)
-		}
+		// intentionally unvalidated
 	default:
 		return NewAppError("LinkMetadata.IsValid", "model.link_metadata.is_valid.type.app_error", nil, "", http.StatusBadRequest)
 	}

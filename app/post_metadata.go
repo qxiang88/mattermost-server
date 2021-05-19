@@ -422,7 +422,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 		if ok {
 			cacheLinkMetadata(requestURL, timestamp, og, image, permalink)
 
-			return og, image, nil, nil
+			return og, image, permalink, nil
 		}
 	}
 
@@ -434,7 +434,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 		if appErr != nil {
 			return nil, nil, nil, appErr
 		}
-		permalink = &model.Permalink{PostMessage: post.Message}
+		permalink = &model.Permalink{LinkedPost: post}
 	} else {
 
 		var request *http.Request
@@ -521,15 +521,19 @@ func (a *App) getLinkMetadataFromDatabase(requestURL string, timestamp int64) (*
 
 	data := linkMetadata.Data
 
+	if linkMetadata.Type == model.LINK_METADATA_TYPE_PERMALINK {
+		return nil, nil, &model.Permalink{}, true
+	}
+
 	switch v := data.(type) {
 	case *opengraph.OpenGraph:
 		return v, nil, nil, true
 	case *model.PostImage:
 		return nil, v, nil, true
-	case *model.Permalink:
-		return nil, nil, v, true
+	// case *model.Permalink:
+	// 	return nil, nil, v, true
 	default:
-		return nil, nil, nil, true // TODO: Shouldn't the boolean be false by default?
+		return nil, nil, nil, true
 	}
 }
 
@@ -547,7 +551,7 @@ func (a *App) saveLinkMetadataToDatabase(requestURL string, timestamp int64, og 
 		metadata.Data = image
 	} else if permalink != nil {
 		metadata.Type = model.LINK_METADATA_TYPE_PERMALINK
-		metadata.Data = permalink
+		metadata.Data = nil
 	} else {
 		metadata.Type = model.LINK_METADATA_TYPE_NONE
 	}
