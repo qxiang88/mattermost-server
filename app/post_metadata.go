@@ -405,6 +405,10 @@ func looksLikeAPermalink(url, siteURL string) bool {
 	return matched
 }
 
+func postIDFromPermalink(url string) string {
+	return url[len(url)-26:]
+}
+
 func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool) (*opengraph.OpenGraph, *model.PostImage, *model.Permalink, error) {
 	requestURL = resolveMetadataURL(requestURL, a.GetSiteURL())
 
@@ -419,6 +423,21 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 	// Check the database if this isn't a new post. If it is a new post and the data is cached, it should be in memory.
 	if !isNewPost {
 		og, image, permalink, ok = a.getLinkMetadataFromDatabase(requestURL, timestamp)
+
+		if permalink != nil && permalink.LinkedPost == nil {
+			postID := postIDFromPermalink(requestURL)
+
+			post, appErr := a.GetSinglePost(postID)
+			// Ignore 'not found' errors; post could have been deleted via retention policy so we don't want to permanently log a warning.
+			//
+			// TODO: Look into saving a value in the LinkMetadat.Data field to prevent perpetually re-querying for the deleted post.
+			if appErr != nil && appErr.StatusCode != http.StatusNotFound {
+				return nil, nil, nil, appErr
+			}
+
+			permalink.LinkedPost = post
+		}
+
 		if ok {
 			cacheLinkMetadata(requestURL, timestamp, og, image, permalink)
 
@@ -429,11 +448,16 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 	var err error
 
 	if looksLikeAPermalink(requestURL, a.GetSiteURL()) {
-		postID := requestURL[len(requestURL)-26:]
+		postID := postIDFromPermalink(requestURL)
+
 		post, appErr := a.GetSinglePost(postID)
-		if appErr != nil {
+		// Ignore 'not found' errors; post could have been deleted via retention policy so we don't want to permanently log a warning.
+		//
+		// TODO: Look into saving a value in the LinkMetadat.Data field to prevent perpetually re-querying for the deleted post.
+		if appErr != nil && appErr.StatusCode != http.StatusNotFound {
 			return nil, nil, nil, appErr
 		}
+
 		permalink = &model.Permalink{LinkedPost: post}
 	} else {
 
