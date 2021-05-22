@@ -32,7 +32,7 @@ type linkMetadataCache struct {
 }
 
 const LinkCacheSize = 10000
-const LinkCacheDuration = 30 * time.Second // TODO: This is 30s for dev. Ensure this is changed back to 1h before deploy.
+const LinkCacheDuration = 1 * time.Hour
 const MaxMetadataImageSize = MaxOpenGraphResponseSize
 
 var linkCache = cache.NewLRU(cache.LRUOptions{
