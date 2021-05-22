@@ -51,7 +51,7 @@ func (s *Server) initPostMetadata() {
 	})
 }
 
-func (a *App) PreparePostListForClient(originalList *model.PostList) *model.PostList {
+func (a *App) PreparePostListForClient(originalList *model.PostList, askingUserID string) *model.PostList {
 	list := &model.PostList{
 		Posts:      make(map[string]*model.Post, len(originalList.Posts)),
 		Order:      originalList.Order,
@@ -60,7 +60,7 @@ func (a *App) PreparePostListForClient(originalList *model.PostList) *model.Post
 	}
 
 	for id, originalPost := range originalList.Posts {
-		post := a.PreparePostForClient(originalPost, false, false)
+		post := a.PreparePostForClient(originalPost, false, false, askingUserID)
 
 		list.Posts[id] = post
 	}
@@ -94,7 +94,7 @@ func (a *App) OverrideIconURLIfEmoji(post *model.Post) {
 	}
 }
 
-func (a *App) PreparePostForClient(originalPost *model.Post, isNewPost bool, isEditPost bool) *model.Post {
+func (a *App) PreparePostForClient(originalPost *model.Post, isNewPost bool, isEditPost bool, askingUserID string) *model.Post {
 	post := originalPost.Clone()
 
 	// Proxy image links before constructing metadata so that requests go through the proxy
@@ -128,7 +128,7 @@ func (a *App) PreparePostForClient(originalPost *model.Post, isNewPost bool, isE
 	// Embeds and image dimensions
 	firstLink, images := a.getFirstLinkAndImages(post.Message)
 
-	if embed, err := a.getEmbedForPost(post, firstLink, isNewPost); err != nil {
+	if embed, err := a.getEmbedForPost(post, firstLink, isNewPost, askingUserID); err != nil {
 		mlog.Debug("Failed to get embedded content for a post", mlog.String("post_id", post.Id), mlog.Err(err))
 	} else if embed == nil {
 		post.Metadata.Embeds = []*model.PostEmbed{}
@@ -167,7 +167,7 @@ func (a *App) getEmojisAndReactionsForPost(post *model.Post) ([]*model.Emoji, []
 	return emojis, reactions, nil
 }
 
-func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool) (*model.PostEmbed, error) {
+func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool, askingUserID string) (*model.PostEmbed, error) {
 	if _, ok := post.GetProps()["attachments"]; ok {
 		return &model.PostEmbed{
 			Type: model.POST_EMBED_MESSAGE_ATTACHMENT,
@@ -200,10 +200,23 @@ func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool
 	}
 
 	if permalink != nil {
-		return &model.PostEmbed{
-			Type: model.POST_EMBED_PERMALINK,
-			Data: permalink,
-		}, nil
+		embed := &model.PostEmbed{Type: model.POST_EMBED_PERMALINK}
+
+		if !model.IsValidId(askingUserID) {
+			return nil, fmt.Errorf("cannot embed permalink preview because user id %q is not valid", askingUserID)
+		}
+
+		referencedChannel, err := a.GetChannel(permalink.LinkedPost.ChannelId)
+		if err != nil {
+			return nil, err
+		}
+
+		// Only embed the referenced post into the Data field if the requesting user has access.
+		if a.HasPermissionToChannel(askingUserID, referencedChannel.Id, model.PERMISSION_READ_CHANNEL) || (referencedChannel.Type == model.CHANNEL_OPEN && a.HasPermissionToTeam(askingUserID, referencedChannel.TeamId, model.PERMISSION_READ_PUBLIC_CHANNEL)) {
+			embed.Data = permalink
+		}
+
+		return embed, nil
 	}
 
 	return &model.PostEmbed{
