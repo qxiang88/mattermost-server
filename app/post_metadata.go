@@ -418,8 +418,8 @@ func looksLikeAPermalink(url, siteURL string) bool {
 	return matched
 }
 
-func postIDFromPermalink(url string) string {
-	return url[len(url)-26:]
+func postIDFromPermalink(permalinkURL string) string {
+	return permalinkURL[len(permalinkURL)-26:]
 }
 
 func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool) (*opengraph.OpenGraph, *model.PostImage, *model.Permalink, error) {
@@ -588,7 +588,7 @@ func (a *App) saveLinkMetadataToDatabase(requestURL string, timestamp int64, og 
 		metadata.Data = image
 	} else if permalink != nil {
 		metadata.Type = model.LINK_METADATA_TYPE_PERMALINK
-		metadata.Data = nil
+		metadata.Data = nil // Permalink's don't persist data; the referenced post retrieved from the data layer and cached to the LinkMetadata cache.
 	} else {
 		metadata.Type = model.LINK_METADATA_TYPE_NONE
 	}
