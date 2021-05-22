@@ -206,7 +206,7 @@ func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool
 			return nil, fmt.Errorf("cannot embed permalink preview because user id %q is not valid", askingUserID)
 		}
 
-		referencedChannel, err := a.GetChannel(permalink.LinkedPost.ChannelId)
+		referencedChannel, err := a.GetChannel(permalink.PreviewPost.ChannelId)
 		if err != nil && err.StatusCode != http.StatusNotFound {
 			return nil, err
 		}
@@ -437,7 +437,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 	if !isNewPost {
 		og, image, permalink, ok = a.getLinkMetadataFromDatabase(requestURL, timestamp)
 
-		if permalink != nil && permalink.LinkedPost == nil {
+		if permalink != nil && permalink.PreviewPost == nil {
 			postID := postIDFromPermalink(requestURL)
 
 			post, appErr := a.GetSinglePost(postID)
@@ -448,7 +448,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 				return nil, nil, nil, appErr
 			}
 
-			permalink.LinkedPost = post
+			permalink.PreviewPost = model.PreviewPostFromPost(post)
 		}
 
 		if ok {
@@ -471,7 +471,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 			return nil, nil, nil, appErr
 		}
 
-		permalink = &model.Permalink{LinkedPost: post}
+		permalink = &model.Permalink{PreviewPost: model.PreviewPostFromPost(post)}
 	} else {
 
 		var request *http.Request
@@ -567,8 +567,6 @@ func (a *App) getLinkMetadataFromDatabase(requestURL string, timestamp int64) (*
 		return v, nil, nil, true
 	case *model.PostImage:
 		return nil, v, nil, true
-	// case *model.Permalink:
-	// 	return nil, nil, v, true
 	default:
 		return nil, nil, nil, true
 	}
