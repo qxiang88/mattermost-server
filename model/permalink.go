@@ -13,6 +13,7 @@ type PreviewPost struct {
 	ChannelId string `json:"channel_id"`
 	Message   string `json:"message"`
 	Type      string `json:"type"`
+	UserID    string `json:"user_id"`
 }
 
 func PreviewPostFromPost(post *Post) *PreviewPost {
@@ -23,6 +24,7 @@ func PreviewPostFromPost(post *Post) *PreviewPost {
 		ChannelId: post.ChannelId,
 		Message:   post.Message,
 		Type:      post.Type,
+		UserID:    post.UserId,
 	}
 }
 
