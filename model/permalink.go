@@ -12,6 +12,7 @@ type PreviewPost struct {
 	UpdateAt  int64  `json:"update_at"`
 	ChannelId string `json:"channel_id"`
 	Message   string `json:"message"`
+	Type      string `json:"type"`
 }
 
 func PreviewPostFromPost(post *Post) *PreviewPost {
@@ -21,6 +22,7 @@ func PreviewPostFromPost(post *Post) *PreviewPost {
 		UpdateAt:  post.UpdateAt,
 		ChannelId: post.ChannelId,
 		Message:   post.Message,
+		Type:      post.Type,
 	}
 }
 
