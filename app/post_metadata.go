@@ -174,7 +174,12 @@ func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool
 		}, nil
 	}
 
-	if firstLink == "" || !*a.Config().ServiceSettings.EnableLinkPreviews {
+	if firstLink == "" {
+		return nil, nil
+	}
+
+	// Permalink previews are not toggled via the ServiceSettings.EnableLinkPreviews config setting.
+	if !*a.Config().ServiceSettings.EnableLinkPreviews && !looksLikeAPermalink(firstLink, *a.Config().ServiceSettings.SiteURL) {
 		return nil, nil
 	}
 
