@@ -218,7 +218,7 @@ func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool
 
 		// Only embed the referenced post into the Data field if the containing channel wasn't deleted and the requesting user has access to the post.
 		if referencedChannel != nil && a.HasPermissionToChannel(askingUserID, referencedChannel.Id, model.PERMISSION_READ_CHANNEL) || (referencedChannel.Type == model.CHANNEL_OPEN && a.HasPermissionToTeam(askingUserID, referencedChannel.TeamId, model.PERMISSION_READ_PUBLIC_CHANNEL)) {
-			embed.Data = permalink
+			embed.Data = permalink.PreviewPost
 		}
 
 		return embed, nil
