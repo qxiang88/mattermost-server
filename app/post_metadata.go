@@ -211,14 +211,16 @@ func (a *App) getEmbedForPost(post *model.Post, firstLink string, isNewPost bool
 			return nil, fmt.Errorf("cannot embed permalink preview because user id %q is not valid", askingUserID)
 		}
 
-		referencedChannel, err := a.GetChannel(permalink.PreviewPost.ChannelId)
-		if err != nil && err.StatusCode != http.StatusNotFound {
-			return nil, err
-		}
+		if permalink.PreviewPost != nil {
+			referencedChannel, err := a.GetChannel(permalink.PreviewPost.ChannelId)
+			if err != nil && err.StatusCode != http.StatusNotFound {
+				return nil, err
+			}
 
-		// Only embed the referenced post into the Data field if the containing channel wasn't deleted and the requesting user has access to the post.
-		if referencedChannel != nil && a.HasPermissionToChannel(askingUserID, referencedChannel.Id, model.PERMISSION_READ_CHANNEL) || (referencedChannel.Type == model.CHANNEL_OPEN && a.HasPermissionToTeam(askingUserID, referencedChannel.TeamId, model.PERMISSION_READ_PUBLIC_CHANNEL)) {
-			embed.Data = permalink.PreviewPost
+			// Only embed the referenced post into the Data field if the containing channel wasn't deleted and the requesting user has access to the post.
+			if referencedChannel != nil && a.HasPermissionToChannel(askingUserID, referencedChannel.Id, model.PERMISSION_READ_CHANNEL) || (referencedChannel.Type == model.CHANNEL_OPEN && a.HasPermissionToTeam(askingUserID, referencedChannel.TeamId, model.PERMISSION_READ_PUBLIC_CHANNEL)) {
+				embed.Data = permalink.PreviewPost
+			}
 		}
 
 		return embed, nil

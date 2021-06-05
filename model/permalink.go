@@ -17,6 +17,9 @@ type PreviewPost struct {
 }
 
 func PreviewPostFromPost(post *Post) *PreviewPost {
+	if post == nil {
+		return nil
+	}
 	return &PreviewPost{
 		Id:        post.Id,
 		CreateAt:  post.CreateAt,
