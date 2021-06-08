@@ -447,7 +447,7 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 		if permalink != nil && permalink.PreviewPost == nil {
 			postID := postIDFromPermalink(requestURL)
 
-			post, appErr := a.GetSinglePost(postID)
+			referencedPost, appErr := a.GetSinglePost(postID)
 			// Ignore 'not found' errors; post could have been deleted via retention policy so we don't want to permanently log a warning.
 			//
 			// TODO: Look into saving a value in the LinkMetadat.Data field to prevent perpetually re-querying for the deleted post.
@@ -455,7 +455,17 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 				return nil, nil, nil, appErr
 			}
 
-			permalink.PreviewPost = model.PreviewPostFromPost(post)
+			referencedChannel, appErr := a.GetChannel(referencedPost.ChannelId)
+			if appErr != nil {
+				return nil, nil, nil, appErr
+			}
+
+			referencedTeam, appErr := a.GetTeam(referencedChannel.TeamId)
+			if appErr != nil {
+				return nil, nil, nil, appErr
+			}
+
+			permalink.PreviewPost = model.PreviewPostFromPost(referencedPost, referencedTeam, referencedChannel)
 		}
 
 		if ok {
@@ -468,9 +478,9 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 	var err error
 
 	if looksLikeAPermalink(requestURL, a.GetSiteURL()) {
-		postID := postIDFromPermalink(requestURL)
+		referencedPostID := postIDFromPermalink(requestURL)
 
-		post, appErr := a.GetSinglePost(postID)
+		referencedPost, appErr := a.GetSinglePost(referencedPostID)
 		// Ignore 'not found' errors; post could have been deleted via retention policy so we don't want to permanently log a warning.
 		//
 		// TODO: Look into saving a value in the LinkMetadat.Data field to prevent perpetually re-querying for the deleted post.
@@ -478,7 +488,17 @@ func (a *App) getLinkMetadata(requestURL string, timestamp int64, isNewPost bool
 			return nil, nil, nil, appErr
 		}
 
-		permalink = &model.Permalink{PreviewPost: model.PreviewPostFromPost(post)}
+		referencedChannel, appErr := a.GetChannel(referencedPost.ChannelId)
+		if appErr != nil {
+			return nil, nil, nil, appErr
+		}
+
+		referencedTeam, appErr := a.GetTeam(referencedChannel.TeamId)
+		if appErr != nil {
+			return nil, nil, nil, appErr
+		}
+
+		permalink = &model.Permalink{PreviewPost: model.PreviewPostFromPost(referencedPost, referencedTeam, referencedChannel)}
 	} else {
 
 		var request *http.Request
