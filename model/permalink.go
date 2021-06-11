@@ -15,9 +15,11 @@ type PreviewPost struct {
 	Type      string `json:"type"`
 	UserID    string `json:"user_id"`
 
-	TeamName    string `json:"team_name"`
-	ChannelName string `json:"channel_name"`
-	ChannelType string `json:"channel_type"`
+	TeamName string `json:"team_name"`
+
+	ChannelName        string `json:"channel_name"`
+	ChannelType        string `json:"channel_type"`
+	ChannelDisplayName string `json:"channel_display_name"`
 }
 
 func PreviewPostFromPost(post *Post, team *Team, channel *Channel) *PreviewPost {
@@ -25,16 +27,17 @@ func PreviewPostFromPost(post *Post, team *Team, channel *Channel) *PreviewPost 
 		return nil
 	}
 	return &PreviewPost{
-		Id:          post.Id,
-		CreateAt:    post.CreateAt,
-		UpdateAt:    post.UpdateAt,
-		ChannelId:   post.ChannelId,
-		Message:     post.Message,
-		Type:        post.Type,
-		UserID:      post.UserId,
-		TeamName:    team.Name,
-		ChannelName: channel.Name,
-		ChannelType: channel.Type,
+		Id:                 post.Id,
+		CreateAt:           post.CreateAt,
+		UpdateAt:           post.UpdateAt,
+		ChannelId:          post.ChannelId,
+		Message:            post.Message,
+		Type:               post.Type,
+		UserID:             post.UserId,
+		TeamName:           team.Name,
+		ChannelName:        channel.Name,
+		ChannelType:        channel.Type,
+		ChannelDisplayName: channel.DisplayName,
 	}
 }
 
